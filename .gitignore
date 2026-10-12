@@ -1,41 +1,62 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# === قاعدة البيانات المحلية ===
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.db
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# === ملفات المستخدمين المرفوعة (لا تُرفع إلى Git) ===
+storage/
+!storage/.gitkeep
+public/uploads/
+!public/uploads/.gitkeep
 
-# testing
-/coverage
+# === متغيرات البيئة (تحتوي أسرارًا) ===
+.env
+.env.local
+.env.*.local
+.env.production
+!.env.example
 
-# next.js
-/.next/
-/out/
+# === مخرجات البناء ===
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+.dev.log
 
-# production
-/build
+# === ملفات مؤقتة للاختبارات ===
+.tmp-fixtures/
+.tmp-storage-tests/
 
-# misc
-.DS_Store
-*.pem
+# === الاعتماديات ===
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+# === ذاكرة التخزين المؤقت والأدوات ===
+.turbo/
+.turbo-cache/
 *.tsbuildinfo
 next-env.d.ts
+coverage/
+.vitest/
+
+# === ذاكرة التخزين المؤقت لـ Prisma ===
+.cache/prisma/
+*.log
+
+# === ملفات النظام والمحررات ===
+.DS_Store
+Thumbs.db
+Thumbs.db:encryptable
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~

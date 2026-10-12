@@ -1,0 +1,24 @@
+# ==========================================================
+#  توحيد نهايات الأسطر حتى لا تتغير الملفات بين Windows و Linux.
+#  في المستودع تُخزَّن الملفات دائمًا بنهايات LF.
+# ==========================================================
+
+* text=auto eol=lf
+
+# ملفات ثنائية لا يجوز لمسها
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.wasm binary
+*.gz   binary
+
+# ملفات Windows تُخزَّن بنهايات CRLF
+*.bat  text eol=crlf
+*.cmd text eol=crlf
+
+# ملفات نموذجية أو مولّدة
+package-lock.json linguist-generated=true
+public/vendor/** linguist-vendored=true

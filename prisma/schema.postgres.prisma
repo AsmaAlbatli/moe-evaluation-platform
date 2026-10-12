@@ -1,0 +1,190 @@
+// مخطط قاعدة البيانات — نسخة PostgreSQL (الإنتاج / Vercel)
+//
+// للتحويل إلى SQLite محليًا استخدم:  npm run db:use:sqlite
+//
+// الفروق عن نسخة SQLite مقصورة على نوع قاعدة البيانات (provider).
+// وبقية الحقول والعلاقات مطابقة حتى يعمل التبديل بأمر واحد.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id              String   @id @default(cuid())
+  name            String?
+  ministryNo      String?
+  stage           String?
+  academicYear    String?
+  educationOffice String?
+  schoolType      String?
+  gender          String?
+  principalName   String?
+  studentsCount   Int?
+  teachersCount   Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  analyses Analysis[]
+
+  @@index([ministryNo])
+}
+
+model Analysis {
+  id                  String   @id @default(cuid())
+  kind                String
+  status              String   @default("in_review")
+  title               String
+  schoolId            String
+  overallPercent      Float?
+  overallSource       String   @default("absent")
+  thresholdsSnapshot  String?
+  extractionQuality   String?
+  extractionSummary   String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  school     School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  indicators IndicatorResult[]
+  aggregates AggregateResult[]
+  plans      PlanItem[]
+  revisions  Revision[]
+  files      SourceFile[]
+
+  @@index([kind])
+  @@index([schoolId])
+}
+
+model IndicatorResult {
+  id           String  @id @default(cuid())
+  analysisId   String
+  code         String
+  domainId     Int
+  criterionCode String
+  percent      Float?
+  percentSource String @default("absent")
+  level        String?
+  levelSource  String  @default("none")
+  sourceLabel  String  @default("غير متوفر")
+  sourcePage   Int?
+  sourceSheet  String?
+  sourceCell   String?
+  rawText      String  @default("")
+  presentInFile Boolean @default(false)
+  reviewed     Boolean @default(false)
+  notes        String  @default("")
+  valueIssue   String?
+
+  recommendationJson    String?
+  recommendationOrigin  String?
+  recommendationApproved Boolean @default(false)
+
+  planIncluded    Boolean @default(false)
+  planTarget      Float?
+  planMeasure     String?
+  planTool        String?
+  planOwner       String?
+  planDuration    String?
+  planStartDate   String?
+  planEndDate     String?
+  planFollowUp    String?
+  planEvidence    String?
+  planBaseline    String?
+  planActual      Float?
+  planStatus      String  @default("not_started")
+  planProgressNote String @default("")
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, code])
+  @@index([analysisId])
+}
+
+model AggregateResult {
+  id          String  @id @default(cuid())
+  analysisId  String
+  scope       String
+  code        String
+  value       Float
+  sourceLabel String  @default("غير متوفر")
+  sourcePage  Int?
+  sourceSheet String?
+  sourceCell  String?
+  analysis    Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, scope, code])
+}
+
+model PlanItem {
+  id           String  @id @default(cuid())
+  analysisId   String
+  indicatorCode String?
+  title        String
+  actionsJson  String  @default("[]")
+  owner        String  @default("")
+  startDate    String?
+  endDate      String?
+  baseline     String?
+  target       Float?
+  actual       Float?
+  measure      String  @default("")
+  tool         String  @default("")
+  evidence     String  @default("")
+  followUp     String  @default("")
+  status       String  @default("not_started")
+  progressNote String  @default("")
+  approved     Boolean @default(false)
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+}
+
+model Revision {
+  id         String   @id @default(cuid())
+  analysisId String
+  entity     String
+  entityId   String
+  field      String
+  oldValue   String   @default("")
+  newValue   String   @default("")
+  actor      String   @default("المشرف/ة")
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@index([createdAt])
+}
+
+model SourceFile {
+  id             String   @id @default(cuid())
+  analysisId     String?
+  originalName   String
+  kind           String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String
+  storageDriver  String   @default("local")
+  storageKey     String
+  extractMode    String   @default("text")
+  extractQuality String?
+  pageCount      Int?
+  notes          String   @default("")
+  createdAt      DateTime @default(now())
+
+  analysis Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+
+  @@index([analysisId])
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

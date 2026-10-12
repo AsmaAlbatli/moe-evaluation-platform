@@ -1,26 +1,298 @@
 @import "tailwindcss";
+/* حركات الدخول والخروج — نسخة محلية لأن حزمة tw-animate-css لا تدعم
+   شرط تصدير "style" في بعض المُجمِّعات. */
+@import "../styles/tw-animate.css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-cairo), "Cairo", "Tajawal", "Segoe UI", Tahoma, sans-serif;
+  --font-mono: var(--font-mono), "Courier New", monospace;
+  --font-heading: var(--font-cairo), "Cairo", "Tajawal", sans-serif;
+
+  /* الهوية البصرية للمنصة */
+  --color-navy: #102a43;
+  --color-navy-soft: #1b3a5c;
+  --color-brand: #1769aa;
+  --color-brand-soft: #e8f1f8;
+  --color-brand-ink: #0f4c7d;
+
+  /* مستويات الأداء */
+  --color-level-tahyea: #dc2626;
+  --color-level-intilaq: #ea580c;
+  --color-level-taqaddum: #2563eb;
+  --color-level-tamayyuz: #16a34a;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #ffffff;
+  --foreground: #1e293b;
+
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+
+  /* الأزرق الأساسي للزر والإجراءات */
+  --primary: #1769aa;
+  --primary-foreground: #ffffff;
+  /* الأزرق الكحلي للترويسة والعناوين */
+  --navy: #102a43;
+
+  --secondary: #e8f1f8;
+  --secondary-foreground: #102a43;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e8f1f8;
+  --accent-foreground: #102a43;
+  --destructive: #dc2626;
+
+  --border: #dbe4ec;
+  --input: #dbe4ec;
+  --ring: #1769aa;
+
+  --chart-1: #dc2626; /* التهيئة */
+  --chart-2: #ea580c; /* الانطلاق */
+  --chart-3: #2563eb; /* التقدم */
+  --chart-4: #16a34a; /* التميز */
+  --chart-5: #94a3b8; /* غير متوفر */
+
+  --radius: 0.6rem;
+
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #1e293b;
+  --sidebar-primary: #1769aa;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8f1f8;
+  --sidebar-accent-foreground: #102a43;
+  --sidebar-border: #dbe4ec;
+  --sidebar-ring: #1769aa;
+}
+
+.dark {
+  --background: #0b1b2b;
+  --foreground: #e2e8f0;
+  --card: #112840;
+  --card-foreground: #e2e8f0;
+  --popover: #112840;
+  --popover-foreground: #e2e8f0;
+  --primary: #2e86c9;
+  --primary-foreground: #ffffff;
+  --navy: #0b1b2b;
+  --secondary: #1b3a5c;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1b3a5c;
+  --muted-foreground: #94a3b8;
+  --accent: #1b3a5c;
+  --accent-foreground: #e2e8f0;
+  --destructive: #f87171;
+  --border: #1e3a5f;
+  --input: #1e3a5f;
+  --ring: #2e86c9;
+  --chart-1: #f87171;
+  --chart-2: #fb923c;
+  --chart-3: #60a5fa;
+  --chart-4: #4ade80;
+  --chart-5: #94a3b8;
+  --sidebar: #0b1b2b;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #2e86c9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1b3a5c;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: #1e3a5f;
+  --sidebar-ring: #2e86c9;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "kern";
+  }
+
+  /* الأرقام العربية تُعرض بشكل صحيح مع الخط */
+  [dir="rtl"] {
+    font-variant-numeric: normal;
+  }
+
+  /* شريط تمرير أنيق */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* ترويسة المنصة */
+  .moe-header {
+    background: linear-gradient(180deg, #102a43 0%, #14365a 100%);
+    color: #ffffff;
+  }
+
+  .moe-header__rule {
+    background: linear-gradient(90deg, transparent, #1769aa 30%, #1769aa 70%, transparent);
+  }
+
+  /* بطاقات أنيقة */
+  .panel {
+    @apply rounded-xl border border-border bg-card shadow-[0_1px_3px_rgba(16,42,67,0.08)];
+  }
+
+  .panel-title {
+    @apply text-base font-bold text-navy;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  /* المؤشر غير المتوفر يظهر موحّدًا في كل الواجهة */
+  .not-available {
+    @apply rounded border border-dashed border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-400;
+  }
+
+  .table-wrap {
+    @apply w-full overflow-x-auto rounded-lg border border-border;
+  }
+
+  .data-table {
+    @apply w-full border-collapse text-sm;
+  }
+  .data-table thead th {
+    @apply sticky top-0 z-10 bg-navy px-3 py-2.5 text-right text-xs font-bold text-white;
+    white-space: nowrap;
+  }
+  .data-table tbody td {
+    @apply border-t border-border px-3 py-2 text-right align-top;
+  }
+  .data-table tbody tr:nth-child(even) {
+    @apply bg-slate-50/70;
+  }
+  .data-table tbody tr:hover {
+    @apply bg-brand-soft/60;
+  }
+
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+  .sortable:hover {
+    @apply text-white/80;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ================================================================
+   الطباعة — A4 باتجاه عربي صحيح
+   ================================================================ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    font-size: 10.5pt;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .panel {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    break-inside: avoid;
+  }
+
+  table {
+    break-inside: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+  tr {
+    break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: "";
+  }
 }

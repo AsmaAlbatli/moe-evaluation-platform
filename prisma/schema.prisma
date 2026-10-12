@@ -1,0 +1,218 @@
+// مخطط قاعدة البيانات — نسخة SQLite (التطوير المحلي)
+//
+// للنشر على PostgreSQL استخدم:  npm run db:use:postgres
+// الذي يستبدل هذا الملف بـ prisma/schema.postgres.prisma
+// المخططان متطابقان في الحقول والعلاقات، ويختلفان في نوع البيانات فقط.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// المدرسة — بيانات أساسية تُستخرج من التقرير وتُصحَّح يدويًا
+model School {
+  id            String    @id @default(cuid())
+  name          String?
+  ministryNo    String?
+  stage         String?
+  academicYear  String?
+  educationOffice String?
+  schoolType    String?
+  gender        String?
+  principalName String?
+  studentsCount Int?
+  teachersCount Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  analyses Analysis[]
+
+  @@index([ministryNo])
+}
+
+/// تحليل واحد: تقرير خارجي أو تقرير ذاتي
+model Analysis {
+  id          String   @id @default(cuid())
+  kind        String   // external | self
+  status      String   @default("in_review") // in_review | approved
+  title       String
+  schoolId    String
+  /// النسبة العامة — تُخزَّن فقط إن وردت في التقرير أو أدخلتها المدرسة
+  overallPercent Float?
+  /// مصدر النسبة العامة: extracted | manual | absent
+  overallSource  String  @default("absent")
+  /// نسخة من إعدادات حدود المستويات وقت إنشاء التحليل (لمراجعة السجل)
+  thresholdsSnapshot String?
+  /// ملخص جودة الاستخراج
+  extractionQuality String? // good | weak | poor
+  extractionSummary String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school     School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  indicators IndicatorResult[]
+  aggregates AggregateResult[]
+  plans      PlanItem[]
+  revisions  Revision[]
+  files      SourceFile[]
+
+  @@index([kind])
+  @@index([schoolId])
+}
+
+/// نتيجة مؤشر واحد
+model IndicatorResult {
+  id         String @id @default(cuid())
+  analysisId String
+  /// رمز المؤشر: المجال-المعيار-المعيار الفرعي-المؤشر
+  code       String
+  domainId   Int
+  criterionCode String
+  /// النسبة الفعلية كما وردت — null = غير متوفرة (وليس صفرًا)
+  percent    Float?
+  /// مصدر النسبة: extracted | manual | absent
+  percentSource String @default("absent")
+  /// المستوى كما ورد أو اشتُق من حدود معتمدة
+  level      String?
+  /// مصدر المستوى: reported | thresholds | none
+  levelSource String @default("none")
+  /// مرجع المصدر: «صفحة ٣» أو «ورقة: النتائج — D12»
+  sourceLabel String @default("غير متوفر")
+  sourcePage   Int?
+  sourceSheet  String?
+  sourceCell   String?
+  /// النص الأصلي كما ورد في الملف
+  rawText     String @default("")
+  /// هل ظهر المؤشر في الملف
+  presentInFile Boolean @default(false)
+  /// هل راجعته المدرسة واعتمدته
+  reviewed   Boolean  @default(false)
+  notes      String   @default("")
+  /// سبب تعذّر قراءة النسبة
+  valueIssue String?
+
+  /// توصية مرتبطة (نصية) — يمكن تعديلها واعتمادها
+  recommendationJson String?
+  recommendationOrigin String? // rules | ai
+  recommendationApproved Boolean @default(false)
+
+  /// حقول خطة التحسين المعتمدة للمؤشر
+  planIncluded  Boolean @default(false)
+  planTarget    Float?
+  planMeasure   String?
+  planTool      String?
+  planOwner     String?
+  planDuration  String?
+  planStartDate String?
+  planEndDate   String?
+  planFollowUp  String?
+  planEvidence  String?
+  planBaseline  String?
+  planActual    Float?
+  planStatus    String  @default("not_started") // not_started | in_progress | done | blocked
+  planProgressNote String @default("")
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, code])
+  @@index([analysisId])
+}
+
+/// نسب المعايير والمجالات كما وردت في التقرير
+model AggregateResult {
+  id         String @id @default(cuid())
+  analysisId String
+  /// النطاق: domain:1 أو criterion:1-2
+  scope      String
+  code       String
+  value      Float
+  sourceLabel String @default("غير متوفر")
+  sourcePage   Int?
+  sourceSheet  String?
+  sourceCell   String?
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, scope, code])
+}
+
+/// عناصر خطة التحسين (قد تكون مرتبطة بمؤشر أو مستقلة)
+model PlanItem {
+  id          String  @id @default(cuid())
+  analysisId  String
+  indicatorCode String?
+  title       String
+  actionsJson String  @default("[]")
+  owner       String  @default("")
+  startDate   String?
+  endDate     String?
+  /// خط الأساس (نص أو رقم)
+  baseline    String?
+  /// المستهدف المعتمد من المدرسة (رقم اختياري)
+  target      Float?
+  /// النتيجة المحققة فعليًا حتى تاريخه
+  actual      Float?
+  measure     String  @default("")
+  tool        String  @default("")
+  evidence    String  @default("")
+  followUp    String  @default("")
+  status      String  @default("not_started")
+  progressNote String @default("")
+  approved    Boolean @default(false)
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+}
+
+/// سجل التعديلات (التدقيق)
+model Revision {
+  id         String   @id @default(cuid())
+  analysisId String
+  entity     String   // indicator | plan | school | settings | analysis
+  entityId   String
+  field      String
+  oldValue   String   @default("")
+  newValue   String   @default("")
+  actor      String   @default("المشرف/ة")
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@index([createdAt])
+}
+
+/// الملف المرفوع (تقرير PDF أو Excel)
+model SourceFile {
+  id          String   @id @default(cuid())
+  analysisId  String?
+  originalName String
+  kind        String   // pdf | xlsx | xls | csv
+  mimeType    String
+  sizeBytes   Int
+  sha256      String
+  storageDriver String @default("local")
+  storageKey  String
+  /// طريقة الاستخراج: text | ocr | manual
+  extractMode String  @default("text")
+  extractQuality String? // good | weak | poor
+  pageCount   Int?
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+
+  analysis Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+
+  @@index([analysisId])
+}
+
+/// إعدادات المنصة (حدود المستويات، مرجعها، قواعد التوصيات، الشعار)
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
