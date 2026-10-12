@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   harvestRows,
   pdfPageRef,
@@ -90,9 +93,39 @@ export interface PdfTextExtraction {
   pageCount: number;
 }
 
+/**
+ * يوجّه pdfjs إلى نسخة العامل (worker) المرفقة داخل المشروع.
+ *
+ * السبب: في بيئات مثل Vercel لا يجد pdfjs ملف العامل داخل node_modules
+ * لأنه لا يُضمَّن في حزمة النشر، فيفشل بخطأ
+ * «Setting up fake worker failed». نسختنا في ‎public/vendor/pdf‎
+ * مضمَّنة دائمًا مع المشروع، فنستخدمها بدل الاعتماد على node_modules.
+ */
+function configurePdfjsWorker(pdfjs: {
+  GlobalWorkerOptions: { workerSrc: string };
+}): void {
+  try {
+    const vendored = join(process.cwd(), "public", "vendor", "pdf", "pdf.worker.min.mjs");
+    if (existsSync(vendored)) {
+      pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(vendored).href;
+      return;
+    }
+  } catch {
+    // نُكمل بالسلوك الافتراضي إن تعذّر الفحص
+  }
+  try {
+    pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
+      "pdfjs-dist/legacy/build/pdf.worker.mjs",
+    );
+  } catch {
+    // نترك pdfjs يستخدم إعداداته الافتراضية
+  }
+}
+
 /** يستخرج نص PDF رقميًا. يرمي خطأً إن كان الملف غير صالح. */
 export async function extractPdfText(data: Uint8Array): Promise<PdfTextExtraction> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  configurePdfjsWorker(pdfjs);
   const loadingTask = pdfjs.getDocument({ data, verbosity: 0 });
   const doc = await loadingTask.promise;
 

@@ -57,7 +57,18 @@ export async function getSettings(force = false): Promise<PlatformSettings> {
   if (!force && cache && Date.now() - cache.at < CACHE_TTL_MS) {
     return cache.value;
   }
-  const rows = await prisma.setting.findMany();
+  let rows: { key: string; value: string }[];
+  try {
+    rows = await prisma.setting.findMany();
+  } catch {
+    // لا تسقط المنصة كاملة إذا تعذّر الوصول إلى قاعدة البيانات:
+    // نستخدم الإعدادات الافتراضية الآمنة بدل رمي خطأ يُسقط البناء.
+    return {
+      ...DEFAULT_SETTINGS,
+      thresholds: { ...DEFAULT_LEVEL_THRESHOLDS },
+      rules: DEFAULT_RULES,
+    };
+  }
   const map = new Map(rows.map((r) => [r.key, r.value]));
 
   const thresholds: LevelThresholds = {

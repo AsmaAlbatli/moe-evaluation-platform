@@ -1,0 +1,23 @@
+# ملفات لا ترفع إلى Vercel
+.next/
+node_modules/
+.git/
+.tmp-fixtures/
+.tmp-storage-tests/
+
+# أسرار ومحلي
+.env
+.env.local
+.env.*.local
+prisma/dev.db
+prisma/dev.db-journal
+storage/
+public/uploads/
+
+# سجلات
+*.log
+.vercel
+
+# نظام التشغيل
+.DS_Store
+Thumbs.db
