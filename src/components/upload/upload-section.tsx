@@ -176,13 +176,79 @@ export function UploadSection({ kind, title, description, onUploaded }: UploadSe
     setError(null);
 
     try {
+      const ocrPages =
+        ocrPagesRef.current.length > 0 ? ocrPagesRef.current : undefined;
+
+      // المسار المفضّل: رفع مباشر من المتصفح إلى التخزين.
+      // يمرّ الملف من المتصفح إلى Blob دون المرور بحجم الدالة
+      // (4.5 ميغابايت على Vercel)، فينجح مع التقارير الكبيرة.
+      const ticketRes = await fetch("/api/upload-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type,
+          size: file.size,
+          kind,
+        }),
+      });
+      const ticket = (await ticketRes.json()) as {
+        uploadUrl?: string;
+        pathname?: string;
+        error?: string;
+      };
+
+      if (ticketRes.ok && ticket.uploadUrl && ticket.pathname) {
+        const putRes = await fetch(ticket.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!putRes.ok) {
+          throw new Error(
+            "تعذّر رفع الملف إلى التخزين (" + putRes.status + "). قد يكون الحجم أكبر من 20 ميجابايت.",
+          );
+        }
+        // خدمة التخزين ترجع الرابط الفعلي بعد الرفع، ونحتاجه لتحليل الملف
+        let uploadedUrl: string | undefined;
+        try {
+          const putBody = (await putRes.json()) as { url?: string };
+          uploadedUrl = putBody.url;
+        } catch {
+          uploadedUrl = undefined;
+        }
+
+        const response = await fetch("/api/analyses/ingest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            blobPathname: ticket.pathname,
+            blobUrl: uploadedUrl,
+            fileName: file.name,
+            contentType: file.type,
+            kind,
+            titleHint: titleHint.trim() || undefined,
+            ocrPages,
+          }),
+        });
+        const data = (await response.json()) as UploadResult & { error?: string };
+        if (!response.ok || data.error) {
+          setError(data.error ?? "تعذّر تحليل الملف.");
+          setPhase("error");
+          return;
+        }
+        setResult(data);
+        setPhase("done");
+        onUploaded?.(data);
+        return;
+      }
+
+      // المسار الاحتياطي: إرسال الملف مباشرةً (للتطوير وللملفات الصغيرة)
       const form = new FormData();
       form.append("file", file);
       form.append("kind", kind);
       if (titleHint.trim()) form.append("titleHint", titleHint.trim());
-      if (ocrPagesRef.current.length > 0) {
-        form.append("ocrPages", JSON.stringify(ocrPagesRef.current));
-      }
+      if (ocrPages) form.append("ocrPages", JSON.stringify(ocrPages));
 
       const response = await fetch("/api/analyses/ingest", { method: "POST", body: form });
       const data = (await response.json()) as UploadResult & { error?: string };

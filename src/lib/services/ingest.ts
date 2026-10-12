@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { prisma, describeDbError } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
-import { buildStorageKey, putObject } from "@/lib/storage";
+import { buildStorageKey, getStorageDriver, putObject } from "@/lib/storage";
 import { extractFromWorkbook } from "@/lib/extract/excel";
 import { extractFromPdf, harvestOcrText } from "@/lib/extract/pdf";
 import {
@@ -39,6 +39,13 @@ export interface IngestOptions {
   titleHint?: string;
   /** صفحات ناتجة عن التحليل البصري في المتصفح (للملفات الممسوحة ضوئيًا) */
   ocrPages?: { page: number; text: string }[];
+  /**
+   * الملف مرفوع مسبقًا إلى التخزين (رفع مباشر من المتصفح).
+   * عندها لا نرفعه مرة أخرى، ونستخدم المفتاح الموجود.
+   */
+  alreadyStored?: boolean;
+  /** مفتاح التخزين عند alreadyStored */
+  storageKey?: string;
 }
 
 export interface IngestResult {
@@ -147,8 +154,12 @@ export async function ingestReport(
   const indicators = buildIndicators(inputs, { thresholds: settings.thresholds });
 
   /* ---------- 3) تخزين الملف ---------- */
-  const storageKey = buildStorageKey(file.name, options.kind === "external" ? "external" : "self");
-  const stored = await putObject(storageKey, file.buffer, file.type || "application/octet-stream");
+  const storageKey = options.storageKey
+    ? `blob:${options.storageKey}`
+    : buildStorageKey(file.name, options.kind === "external" ? "external" : "self");
+  const stored = options.alreadyStored
+    ? { driver: getStorageDriver(), key: storageKey }
+    : await putObject(storageKey, file.buffer, file.type);
 
   /* ---------- 4) إنشاء التحليل ---------- */
   const extractedName = harvest.school.name.value;

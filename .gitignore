@@ -8,8 +8,10 @@ prisma/dev.db-journal
 prisma/*.db
 
 # === ملفات المستخدمين المرفوعة (لا تُرفع إلى Git) ===
-storage/
-!storage/.gitkeep
+# ملاحظة: التقييد بالجذر مهم — بدونه يستثني هذا النمط أي مجلد اسمه
+# storage في أي مكان، ومنه src/lib/storage الذي يحتوي كود المنصة.
+/storage/
+!/storage/.gitkeep
 public/uploads/
 !public/uploads/.gitkeep
 
